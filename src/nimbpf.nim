@@ -3,7 +3,6 @@ import posix
 import tables
 import options
 import parseutils
-import libbpf
 
 import nimbpf/uapibpf
 import nimbpf/libbpf
