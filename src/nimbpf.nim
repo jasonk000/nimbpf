@@ -121,21 +121,17 @@ proc bootBpf*(elfBpfFile: cstring): void =
       else:
         logger.log(lvlWarn, "  program: " & rawtitle & " -> unsupported")
 
-proc fetchFromContainerMap*(map: string, container: string): Option[uint64] =
+proc fetchFromMap*(map: string, key: var culong): Option[uint64] =
   if not mapFds.hasKey(map):
-    logger.log(lvlError, "fetchFromContainerMap: count not find fd for map (was bpf loaded?): " & $map)
+    logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
     return none(uint64)
 
-  var key = containerNameToPidNs(container)
-  if key.isNone():
-    logger.log(lvlWarn, "fetchFromContainerMap: could not find pidns for: " & $container)
-    return none(uint64)
-
-  var value: culonglong
   var fd = mapFds[map]
+  var value: culonglong
+
   let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
   if ret == -1:
-    logger.log(lvlWarn, "fetchFromContainerMap: did not find value in map for: " & $container)
+    logger.log(lvlWarn, "fetchFromMap: did not find value in map for: " & $key)
     return none(uint64)
 
   return some(value.uint64)
