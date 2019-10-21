@@ -8,7 +8,7 @@ import logging
 import nimbpf/uapibpf
 import nimbpf/libbpf
 
-var logger = newConsoleLogger()
+var logger = newConsoleLogger(useStderr=true)
 
 var mapFds = initTable[string, cint]()
 
