@@ -136,7 +136,7 @@ proc fetchFromMap*(map: string, key: var culong): Option[uint64] =
 
   return some(value.uint64)
 
-proc fetchFromMapPointerKey*(map: string, key: ptr any): Option[uint64] =
+proc fetchFromMapPointerKey*(map: string, key: ref any): Option[uint64] =
   if not mapFds.hasKey(map):
     logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
     return none(uint64)
@@ -144,7 +144,7 @@ proc fetchFromMapPointerKey*(map: string, key: ptr any): Option[uint64] =
   var fd = mapFds[map]
   var value: culonglong
 
-  let ret = bpf_map_lookup_elem(fd, key, addr(value))
+  let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
   if ret == -1:
     logger.log(lvlWarn, "fetchFromMap: did not find value in map for: " & $key)
     return none(uint64)
