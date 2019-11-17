@@ -131,7 +131,6 @@ proc fetchFromMap*(map: string, key: var culong): Option[uint64] =
 
   let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
   if ret == -1:
-    logger.log(lvlWarn, "fetchFromMap: did not find value in map for: " & $key)
     return none(uint64)
 
   return some(value.uint64)
@@ -146,7 +145,6 @@ proc fetchFromMapPointerKey*(map: string, key: var any): Option[uint64] =
 
   let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
   if ret == -1:
-    logger.log(lvlWarn, "fetchFromMap: did not find value in map for: " & $key)
     return none(uint64)
 
   return some(value.uint64)
