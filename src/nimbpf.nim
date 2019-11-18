@@ -121,7 +121,7 @@ proc bootBpf*(elfBpfFile: cstring): void =
       else:
         logger.log(lvlWarn, "  program: " & rawtitle & " -> unsupported")
 
-proc fetchFromMap*(map: string, key: var culong): Option[uint64] =
+proc fetchFromMap*(map: string, key: var any): Option[uint64] =
   if not mapFds.hasKey(map):
     logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
     return none(uint64)
@@ -134,18 +134,3 @@ proc fetchFromMap*(map: string, key: var culong): Option[uint64] =
     return none(uint64)
 
   return some(value.uint64)
-
-proc fetchFromMapPointerKey*(map: string, key: var any): Option[uint64] =
-  if not mapFds.hasKey(map):
-    logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
-    return none(uint64)
-
-  var fd = mapFds[map]
-  var value: culonglong
-
-  let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
-  if ret == -1:
-    return none(uint64)
-
-  return some(value.uint64)
-
