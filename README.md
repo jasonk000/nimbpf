@@ -14,7 +14,8 @@ compiled along the lines of the instructions further along in this document.
 
 This fetches a uint64 value from a BPF map. The map name should be a string
 that matches the name in the bcc code. The key can be a pointer to any type
-such as a culong or a normal nim object (aka struct).
+such as a culong or a normal nim object (aka struct). Obviously, it should
+map to the same type as whatever bcc code was written.
 
 ### Teardown
 
