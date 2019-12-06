@@ -121,6 +121,38 @@ proc bootBpf*(elfBpfFile: cstring): void =
       else:
         logger.log(lvlWarn, "  program: " & rawtitle & " -> unsupported")
 
+proc openPinnedBpfMap*(map: string, filename: string): Option[uint64] =
+  logger.log(lvlInfo, "opening pinned map from " & filename & " as " & map)
+  let fd = bpf_obj_get(filename)
+  if fd < 0:
+    logger.log(lvlWarn, "  could not open map, bpf_obj_get returned: " & $fd)
+    return none(uint64)
+
+  # check the type (no PATH_MAX available?)
+  let buf = newString(4096)
+  let buf_c_str: cstring = buf.cstring
+  let actually_read = readlink("/proc/self/fd/" & $fd, buf_c_str, len(buf_c_str))
+  if actually_read < 0:
+    logger.log(lvlWarn, "  could not open map, readlink returned: " & $actually_read)
+    discard close(fd)
+    return none(uint64)
+
+  if actually_read == len(buf.cstring):
+    logger.log(lvlWarn, "  could not open map, readlink buffer too short")
+    discard close(fd)
+    return none(uint64)
+
+  if ($buf).contains("bpf-map"):
+    logger.log(lvlWarn, "  could not open map, readlink did not return a bpf-map")
+    discard close(fd)
+    return none(uint64)
+
+  # store the fd in the map, and return the value so that caller knows
+  logger.log(lvlInfo, "  successfully opened bpf map")
+  mapFds[map] = fd
+  # TODO the fd will never be closed, we probably should not leak to caller
+  return some(fd.uint64)
+
 proc fetchFromMap*(map: string, key: var any): Option[uint64] =
   if not mapFds.hasKey(map):
     logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
