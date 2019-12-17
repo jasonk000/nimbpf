@@ -10,17 +10,22 @@ The API is simple, there are only a few calls available:
 Loads any maps and code available in the given file. The file should be
 compiled along the lines of the instructions further along in this document.
 
-`proc fetchFromMap*(map: string, key: var any): Option[uint64]`
-
-Fetches a uint64 value from a BPF map. The map name should be a string
-that matches the name in the bcc code. The key can be a pointer to any type
-such as a culong or a normal nim object (aka struct).
-
 `proc openPinnedMap*(map: string, filename: string): Option[uint64]`
 
 Opens a previously pinned BPF map. The map name is an identifier that can be
 used in later calls to fetchFromMap. The filename refers to the pinned map
 path in bpf filesystem: `/sys/fs/bpf/..`.
+
+`iterator getKeys*([T](map: string): T`
+
+Returns an iterator that will iterate all keys in a map.
+
+`proc fetchUint16FromMap*(map: string, key: var any): Option[T]`
+`proc fetchUint64FromMap*(map: string, key: var any): Option[T]`
+
+Fetches a uint16 or uint64 value from a BPF map. The map name should be a string
+that matches the name in the bcc code. The key can be a pointer to any type
+such as a culong or a normal nim object (aka struct).
 
 ### Teardown
 

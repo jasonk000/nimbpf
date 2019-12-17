@@ -44,8 +44,8 @@ proc getKernelVersion(): cuint =
 proc setRLimit(): void =
   const RLIMIT_MEMLOCK = 8 # ugh, see resource.h
   var r: RLimit
-  r.rlim_cur = 100*1024*1024 # 100mb
-  r.rlim_max = 100*1024*1024 # 100mb
+  r.rlim_cur = 200*1024*1024 # mb
+  r.rlim_max = 200*1024*1024 # mb
   let res = setrlimit(RLIMIT_MEMLOCK, r)
   if res == 0:
     logger.log(lvlInfo, "set rlimit: success")
@@ -128,34 +128,55 @@ proc openPinnedBpfMap*(map: string, filename: string): Option[uint64] =
     logger.log(lvlWarn, "  could not open map, bpf_obj_get returned: " & $fd)
     return none(uint64)
 
-  # check the type (no PATH_MAX available?)
+  # TODO the lengths of buffers here need some checking,
+  # to be safe, make them shorter for the moment
   let buf = newString(4096)
   let buf_c_str: cstring = buf.cstring
-  let actually_read = readlink("/proc/self/fd/" & $fd, buf_c_str, len(buf_c_str))
+  let fd_name = "/proc/self/fd/" & $fd
+  let actually_read = readlink($fd_name, buf_c_str, 4096-1)
   if actually_read < 0:
-    logger.log(lvlWarn, "  could not open map, readlink returned: " & $actually_read)
+    logger.log(lvlWarn, "  could not open map, readlink from fd " & $fd_name & " read: " & $actually_read)
     discard close(fd)
     return none(uint64)
 
-  if actually_read == len(buf.cstring):
-    logger.log(lvlWarn, "  could not open map, readlink buffer too short")
+  if actually_read >= 4090:
+    logger.log(lvlWarn, "  could not open map, readlink from fd " & $fd_name & ": buffer too short")
     discard close(fd)
     return none(uint64)
 
-  if ($buf).contains("bpf-map"):
-    logger.log(lvlWarn, "  could not open map, readlink did not return a bpf-map")
+  if not ($buf).contains("bpf-map"):
+    logger.log(lvlWarn, "  could not open map, readlink did not return a bpf-map: " &
+        $fd_name & " -> " & $buf)
     discard close(fd)
     return none(uint64)
 
-  # store the fd in the map, and return the value so that caller knows
-  logger.log(lvlInfo, "  successfully opened bpf map")
+  # TODO there are other types as well, but this is about bpf-map
+
+  logger.log(lvlInfo, "  successfully opened bpf map with fd=" & $fd)
   mapFds[map] = fd
-  # TODO the fd will never be closed, we probably should not leak to caller
+
+  # TODO how should the caller close the map?
+
   return some(fd.uint64)
 
-proc fetchFromMap*(map: string, key: var any): Option[uint64] =
+proc fetchUint16FromMap*(map: string, key: var any): Option[uint16] =
   if not mapFds.hasKey(map):
-    logger.log(lvlError, "fetchFromMap: count not find fd for map (was bpf loaded?): " & $map)
+    logger.log(lvlError, "fetchUint16FromMap: count not find fd for map (was bpf loaded?): " & $map)
+    return none(uint16)
+
+  var fd = mapFds[map]
+  var value: cushort
+
+  let ret = bpf_map_lookup_elem(fd, addr(key), addr(value))
+  if ret == -1:
+    return none(uint16)
+
+  return some(value.uint16)
+
+
+proc fetchUint64FromMap*(map: string, key: var any): Option[uint64] =
+  if not mapFds.hasKey(map):
+    logger.log(lvlError, "fetchUint64FromMap: count not find fd for map (was bpf loaded?): " & $map)
     return none(uint64)
 
   var fd = mapFds[map]
@@ -166,3 +187,19 @@ proc fetchFromMap*(map: string, key: var any): Option[uint64] =
     return none(uint64)
 
   return some(value.uint64)
+
+iterator getKeys*[T](map: string): T =
+  if not mapFds.hasKey(map):
+    logger.log(lvlError, "getKeys: count not find fd for map (was bpf loaded?): " & $map)
+  else:
+    var fd = mapFds[map]
+
+    var prevkey: T
+    var key: T
+
+    var ret = bpf_map_get_next_key(fd, nil, addr(key))
+    while ret == 0:
+      yield key
+      prevkey = key
+      ret = bpf_map_get_next_key(fd, addr(prevkey), addr(key))
+
