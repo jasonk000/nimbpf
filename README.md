@@ -3,16 +3,27 @@ libbpf for nim
 
 ## API
 
-The API is simple, there are two calls available:
+The API is simple, there are only a few calls available:
 
 `proc bootBpf*(elfBpfFile: cstring): void`
 
-This loads any maps and code available in the given file. The file should be
+Loads any maps and code available in the given file. The file should be
 compiled along the lines of the instructions further along in this document.
 
-`proc fetchFromMap*(map: string, key: var any): Option[uint64]`
+`proc openPinnedMap*(map: string, filename: string): Option[uint64]`
 
-This fetches a uint64 value from a BPF map. The map name should be a string
+Opens a previously pinned BPF map. The map name is an identifier that can be
+used in later calls to fetchFromMap. The filename refers to the pinned map
+path in bpf filesystem: `/sys/fs/bpf/..`.
+
+`iterator getKeys*([T](map: string): T`
+
+Returns an iterator that will iterate all keys in a map.
+
+`proc fetchUint16FromMap*(map: string, key: var any): Option[T]`
+`proc fetchUint64FromMap*(map: string, key: var any): Option[T]`
+
+Fetches a uint16 or uint64 value from a BPF map. The map name should be a string
 that matches the name in the bcc code. The key can be a pointer to any type
 such as a culong or a normal nim object (aka struct). Obviously, it should
 map to the same type as whatever bcc code was written.
