@@ -21,6 +21,7 @@ path in bpf filesystem: `/sys/fs/bpf/..`.
 Returns an iterator that will iterate all keys in a map.
 
 `proc fetchUint16FromMap*(map: string, key: var any): Option[T]`
+
 `proc fetchUint64FromMap*(map: string, key: var any): Option[T]`
 
 Fetches a uint16 or uint64 value from a BPF map. The map name should be a string
