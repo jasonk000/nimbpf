@@ -41,7 +41,8 @@ static:
     "https://github.com/libbpf/libbpf.git",
     outdir = libbpfDir,
     #checkout = "7e447c35b7b83351c630a5c09cb802d19e4bcacc")
-    checkout = "0a216f37f8f4aaa9c466ce5320ec751c1de1e4ab")
+    #checkout = "0a216f37f8f4aaa9c466ce5320ec751c1de1e4ab")
+    )
 
   # this is a little cheeky, but saves a lot of implementation effort
   # libbpf does not provide a set_kversion to set the version of the ELF file,
@@ -52,21 +53,22 @@ static:
   #   we can also pass our intended kversion at the right point
   # - recompile the ELF file each time including the version (defeating the purpose)
   # - patch the ELF file on the host (also seems feasible)
-  let beforec = readFile(libbpfDir / "src/libbpf.c")
-  writeFile(libbpfDir / "src/libbpf.c", beforec & LIBBPF_C_PATCH)
+  #let beforec = readFile(libbpfDir / "src/libbpf.c")
+  #writeFile(libbpfDir / "src/libbpf.c", beforec & LIBBPF_C_PATCH)
 
-  let beforeh = readFile(libbpfDir / "src/libbpf.h")
-  writeFile(libbpfDir / "src/libbpf.h", beforeh & LIBBPF_H_PATCH)
+  #let beforeh = readFile(libbpfDir / "src/libbpf.h")
+  #writeFile(libbpfDir / "src/libbpf.h", beforeh & LIBBPF_H_PATCH)
 
-  cAddStdDir()
+  #cAddStdDir()
   cDisableCaching()
 
   make(libbpfDir / "src", "libbpf.so")
 
-  cskipSymbol @[
-    "bpf_insn",
-    "bpf_prog_info",
-  ]
+  #cskipSymbol @[
+  #  "bpf_insn",
+  #  "bpf_prog_info",
+  #  "xsk_socket_create",
+  #]
 
 cIncludeDir(libbpfDir / "include")
 cIncludeDir(libbpfDir / "include/uapi")

@@ -202,4 +202,3 @@ iterator getKeys*[T](map: string): T =
       yield key
       prevkey = key
       ret = bpf_map_get_next_key(fd, addr(prevkey), addr(key))
-
