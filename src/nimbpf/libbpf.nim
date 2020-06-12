@@ -64,11 +64,11 @@ static:
 
   make(libbpfDir / "src", "libbpf.so")
 
-  #cskipSymbol @[
-  #  "bpf_insn",
-  #  "bpf_prog_info",
-  #  "xsk_socket_create",
-  #]
+  cskipSymbol @[
+    "bpf_insn",
+    "bpf_prog_info",
+    "xsk_socket_create",
+  ]
 
 cIncludeDir(libbpfDir / "include")
 cIncludeDir(libbpfDir / "include/uapi")
