@@ -5,6 +5,7 @@ import options
 import parseutils
 import logging
 
+import nimbpf/uapibpf
 import nimbpf/libbpf
 
 var logger = newConsoleLogger(useStderr=true)
