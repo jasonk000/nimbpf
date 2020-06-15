@@ -39,3 +39,4 @@ static:
 #  ]
 
 cImport(libbpfDir / "src/libbpf.h")
+cImport(libbpfDir / "src/bpf_helpers.h")
