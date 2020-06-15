@@ -32,11 +32,5 @@ static:
   cAddStdDir()
   cDisableCaching()
 
-#  cskipSymbol @[
-#    "bpf_insn",
-#    "bpf_prog_info",
-#    "xsk_socket_create",
-#  ]
-
 cImport(libbpfDir / "src/libbpf.h")
 cImport(libbpfDir / "src/bpf_helpers.h")
